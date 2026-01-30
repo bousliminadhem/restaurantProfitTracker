@@ -1,209 +1,196 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
-class SummaryScreen extends StatefulWidget {
+class SummaryScreen extends StatelessWidget {
   final double totalProfit;
   
-  const SummaryScreen({
-    super.key,
-    required this.totalProfit,
-  });
-
-  @override
-  State<SummaryScreen> createState() => _SummaryScreenState();
-}
-
-class _SummaryScreenState extends State<SummaryScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.elasticOut,
-      ),
-    );
-    
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeIn,
-      ),
-    );
-    
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+  const SummaryScreen({super.key, required this.totalProfit});
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      child: Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.green.shade900,
-                Colors.green.shade600,
-                Colors.lightGreen.shade400,
-              ],
-            ),
-          ),
-          child: SafeArea(
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+        ),
+        child: SafeArea(
+          child: Center(
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(AppTheme.spaceLarge),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 40),
-                    
                     // Success Icon
-                    FadeTransition(
-                      opacity: _fadeAnimation,
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spaceLarge),
+                      decoration: BoxDecoration(
+                        color: AppTheme.offWhite.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(100),
+                        border: Border.all(
+                          color: AppTheme.goldenOrange,
+                          width: 3,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.goldenOrange.withOpacity(0.4),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
                       child: const Icon(
                         Icons.check_circle,
-                        size: 100,
-                        color: Colors.white,
+                        size: 80,
+                        color: AppTheme.goldenOrange,
                       ),
                     ),
                     
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppTheme.spaceXLarge),
                     
                     // Title
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: const Text(
-                        'Service Completed!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
+                    const Text(
+                      'Service Completed!',
+                      style: AppTheme.displayMedium,
+                      textAlign: TextAlign.center,
                     ),
                     
-                    const SizedBox(height: 40),
+                    const SizedBox(height: AppTheme.spaceSmall),
                     
-                    // Total Profit Card
-                    ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: Container(
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              'Total Profit',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              '€${widget.totalProfit.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontSize: 56,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green.shade700,
-                                letterSpacing: 2,
-                              ),
-                            ),
-                          ],
-                        ),
+                    Text(
+                      'Great work today',
+                      style: AppTheme.bodyLarge.copyWith(
+                        color: AppTheme.offWhite.withOpacity(0.8),
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     
-                    const SizedBox(height: 40),
+                    const SizedBox(height: AppTheme.spaceXLarge * 1.5),
                     
-                    // Congratulations Message
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Text(
-                        widget.totalProfit > 0
-                            ? 'Great job! Your shift was successful.'
-                            : 'Ready for the next service!',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w400,
+                    // Profit Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppTheme.spaceLarge * 1.5),
+                      decoration: BoxDecoration(
+                        color: AppTheme.offWhite,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                        boxShadow: AppTheme.elevatedShadow,
+                        border: Border.all(
+                          color: AppTheme.goldenOrange.withOpacity(0.3),
+                          width: 2,
                         ),
                       ),
-                    ),
-                    
-                    const SizedBox(height: 60),
-                    
-                    // Return Home Button
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SizedBox(
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).popUntil((route) => route.isFirst);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.green.shade700,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 8,
-                          ),
-                          child: const Row(
+                      child: Column(
+                        children: [
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.home, size: 28),
-                              SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  gradient: AppTheme.accentGradient,
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                ),
+                                child: const Icon(
+                                  Icons.monetization_on,
+                                  color: AppTheme.offWhite,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spaceSmall),
                               Text(
-                                'Return to Home',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
+                                'Total Profit',
+                                style: AppTheme.headlineMedium.copyWith(
+                                  color: AppTheme.bordeauxRed,
                                 ),
                               ),
                             ],
                           ),
+                          
+                          const SizedBox(height: AppTheme.spaceMedium),
+                          
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppTheme.spaceLarge,
+                              vertical: AppTheme.spaceMedium,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppTheme.successGreen.withOpacity(0.1),
+                                  AppTheme.successGreen.withOpacity(0.05),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                              border: Border.all(
+                                color: AppTheme.successGreen.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: Text(
+                              'Dt${totalProfit.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 56,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.successGreen,
+                                letterSpacing: 1.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: AppTheme.spaceXLarge * 1.5),
+                    
+                    // Return Home Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                        },
+                        icon: const Icon(Icons.home, size: 28),
+                        label: const Text(
+                          'Return to Home',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.goldenOrange,
+                          foregroundColor: AppTheme.offWhite,
+                          elevation: 6,
+                          shadowColor: AppTheme.goldenOrange.withOpacity(0.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                          ),
                         ),
                       ),
                     ),
                     
-                    const SizedBox(height: 40),
+                    const SizedBox(height: AppTheme.spaceMedium),
+                    
+                    // Secondary Action
+                    TextButton.icon(
+                      onPressed: () {
+                        // Could add share or export functionality here
+                      },
+                      icon: const Icon(Icons.share, color: AppTheme.offWhite),
+                      label: Text(
+                        'Share Results',
+                        style: AppTheme.bodyLarge.copyWith(
+                          color: AppTheme.offWhite,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

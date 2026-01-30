@@ -1,117 +1,156 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/service_provider.dart';
+import '../theme/app_theme.dart';
 import 'dish_management_screen.dart';
 import 'service_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  late AnimationController _logoController;
+  late AnimationController _buttonsController;
+  late Animation<double> _logoScale;
+  late Animation<double> _logoRotation;
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    _logoController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    
+    _buttonsController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    
+    _logoScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
+    );
+    
+    _logoRotation = Tween<double>(begin: -0.2, end: 0.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.easeOut),
+    );
+    
+    _logoController.forward().then((_) {
+      _buttonsController.forward();
+    });
+  }
+  
+  @override
+  void dispose() {
+    _logoController.dispose();
+    _buttonsController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final serviceProvider = Provider.of<ServiceProvider>(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.deepPurple.shade900,
-              Colors.deepPurple.shade600,
-              Colors.purple.shade400,
-            ],
-          ),
+        width: screenWidth,
+        height: screenHeight,
+        decoration: const BoxDecoration(
+          gradient: AppTheme.primaryGradient,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spaceLarge,
+                vertical: AppTheme.spaceMedium,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 40),
-                  // App Title
-                  const Icon(
-                    Icons.restaurant_menu,
-                    size: 80,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Restaurant Profit',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const Text(
-                    'Tracker',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w300,
-                      color: Colors.white70,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 60),
+                  const SizedBox(height: AppTheme.spaceXLarge),
                   
-                  // Start Service Button
-                  _buildActionButton(
+                  // Animated Logo and Title
+                  _buildAnimatedHeader(),
+                  
+                  const SizedBox(height: AppTheme.spaceXLarge * 1.5),
+                  
+                  // Animated Action Buttons
+                  _buildAnimatedButton(
                     context: context,
+                    index: 0,
                     icon: Icons.play_circle_filled,
                     label: 'Start Service',
-                    color: Colors.green.shade400,
+                    gradient: AppTheme.successGradient,
                     onPressed: () {
                       serviceProvider.startService();
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const ServiceScreen(),
-                        ),
+                        _createRoute(const ServiceScreen()),
                       );
                     },
                   ),
                   
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppTheme.spaceLarge),
                   
-                  // Manage Dishes Button
-                  _buildActionButton(
+                  _buildAnimatedButton(
                     context: context,
+                    index: 1,
                     icon: Icons.restaurant,
                     label: 'Manage Dishes',
-                    color: Colors.orange.shade400,
+                    gradient: AppTheme.accentGradient,
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const DishManagementScreen(),
-                        ),
+                        _createRoute(const DishManagementScreen()),
                       );
                     },
                   ),
                   
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppTheme.spaceLarge),
                   
-                  // View History Button
-                  _buildActionButton(
+                  _buildAnimatedButton(
                     context: context,
+                    index: 2,
                     icon: Icons.history,
                     label: 'Shift History',
-                    color: Colors.blue.shade400,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
+                    ),
                     onPressed: () => _showShiftHistory(context),
                   ),
                   
-                  const SizedBox(height: 40),
+                  const SizedBox(height: AppTheme.spaceXLarge),
                   
-                  // Statistics
+                  // Animated Statistics Card
                   if (serviceProvider.shiftHistory.isNotEmpty)
-                    _buildStatisticsCard(serviceProvider),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.easeOut,
+                      builder: (context, value, child) {
+                        return Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(0, 30 * (1 - value)),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _buildStatisticsCard(serviceProvider),
+                    ),
+                  
+                  const SizedBox(height: AppTheme.spaceLarge),
                 ],
               ),
             ),
@@ -121,51 +160,211 @@ class HomeScreen extends StatelessWidget {
     );
   }
   
+  Widget _buildAnimatedHeader() {
+    return AnimatedBuilder(
+      animation: _logoController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _logoScale.value,
+          child: Transform.rotate(
+            angle: _logoRotation.value,
+            child: child,
+          ),
+        );
+      },
+      child: Column(
+        children: [
+          // Animated Restaurant Icon with Glow
+          Hero(
+            tag: 'app_logo',
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.offWhite.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+                border: Border.all(
+                  color: AppTheme.goldenOrange.withOpacity(0.6),
+                  width: 3,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.goldenOrange.withOpacity(0.4),
+                    blurRadius: 30,
+                    spreadRadius: 5,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(seconds: 2),
+                curve: Curves.easeInOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: 1.0 + (0.05 * (value < 0.5 ? value * 2 : (1 - value) * 2)),
+                    child: child,
+                  );
+                },
+                child: const Icon(
+                  Icons.restaurant_menu,
+                  size: 64,
+                  color: AppTheme.goldenOrange,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spaceLarge),
+          
+          // App Title with Shimmer Effect
+          ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [
+                AppTheme.offWhite,
+                AppTheme.goldenOrange,
+                AppTheme.offWhite,
+              ],
+              stops: [0.0, 0.5, 1.0],
+            ).createShader(bounds),
+            child: const Text(
+              'Restaurant Profit',
+              textAlign: TextAlign.center,
+              style: AppTheme.displayLarge,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'TRACKER',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w300,
+              color: AppTheme.goldenOrange,
+              letterSpacing: 5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 100.0),
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeOut,
+            builder: (context, value, child) {
+              return Container(
+                height: 2,
+                width: value,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.accentGradient,
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildAnimatedButton({
+    required BuildContext context,
+    required int index,
+    required IconData icon,
+    required String label,
+    required LinearGradient gradient,
+    required VoidCallback onPressed,
+  }) {
+    return AnimatedBuilder(
+      animation: _buttonsController,
+      builder: (context, child) {
+        final delay = index * 0.15;
+        final progress = (_buttonsController.value - delay).clamp(0.0, 1.0);
+        
+        return Opacity(
+          opacity: progress,
+          child: Transform.translate(
+            offset: Offset(0, 50 * (1 - progress)),
+            child: child,
+          ),
+        );
+      },
+      child: _buildActionButton(
+        context: context,
+        icon: icon,
+        label: label,
+        gradient: gradient,
+        onPressed: onPressed,
+      ),
+    );
+  }
+  
   Widget _buildActionButton({
     required BuildContext context,
     required IconData icon,
     required String label,
-    required Color color,
+    required LinearGradient gradient,
     required VoidCallback onPressed,
   }) {
     return Material(
       elevation: 8,
-      borderRadius: BorderRadius.circular(20),
+      shadowColor: AppTheme.darkBrown.withOpacity(0.4),
+      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
       child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(24),
+        onTap: () {
+          // Haptic feedback simulation with animation
+          onPressed();
+        },
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        child: Ink(
           decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.4),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 32, color: Colors.white),
-              const SizedBox(width: 16),
-              Flexible(
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spaceLarge,
+              vertical: 20,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Hero(
+                  tag: 'button_${label}_icon',
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.offWhite.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(icon, size: 32, color: AppTheme.offWhite),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: AppTheme.spaceMedium),
+                Flexible(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.offWhite,
+                      letterSpacing: 0.5,
+                      shadows: [
+                        Shadow(
+                          color: Color(0x40000000),
+                          offset: Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -181,29 +380,96 @@ class HomeScreen extends StatelessWidget {
     final avgRevenue = totalRevenue / totalShifts;
     
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppTheme.spaceLarge),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+        color: AppTheme.offWhite,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        boxShadow: AppTheme.elevatedShadow,
+        border: Border.all(
+          color: AppTheme.goldenOrange.withOpacity(0.3),
+          width: 2,
+        ),
       ),
       child: Column(
         children: [
-          const Text(
-            'Quick Stats',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                ),
+                child: const Icon(
+                  Icons.assessment,
+                  color: AppTheme.goldenOrange,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: AppTheme.spaceSmall),
+              Text(
+                'Quick Stats',
+                style: AppTheme.headlineMedium.copyWith(
+                  color: AppTheme.bordeauxRed,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spaceMedium),
+          
+          Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.warmGray.withOpacity(0.1),
+                  AppTheme.warmGray.withOpacity(0.5),
+                  AppTheme.warmGray.withOpacity(0.1),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          
+          const SizedBox(height: AppTheme.spaceMedium),
+          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Flexible(child: _buildStatItem('Total Shifts', '$totalShifts')),
-              Flexible(child: _buildStatItem('Total Revenue', '€${totalRevenue.toStringAsFixed(2)}')),
-              Flexible(child: _buildStatItem('Avg/Shift', '€${avgRevenue.toStringAsFixed(2)}')),
+              Flexible(
+                child: _buildStatItem(
+                  'Total Shifts',
+                  '$totalShifts',
+                  Icons.calendar_today,
+                  AppTheme.bordeauxRed,
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 60,
+                color: AppTheme.warmGray.withOpacity(0.3),
+              ),
+              Flexible(
+                child: _buildStatItem(
+                  'Total Revenue',
+                  'Dt${totalRevenue.toStringAsFixed(2)}',
+                  Icons.attach_money,
+                  AppTheme.freshGreen,
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 60,
+                color: AppTheme.warmGray.withOpacity(0.3),
+              ),
+              Flexible(
+                child: _buildStatItem(
+                  'Avg/Shift',
+                  'Dt${avgRevenue.toStringAsFixed(2)}',
+                  Icons.trending_up,
+                  AppTheme.goldenOrange,
+                ),
+              ),
             ],
           ),
         ],
@@ -211,33 +477,67 @@ class HomeScreen extends StatelessWidget {
     );
   }
   
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-          maxLines: 1,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.elasticOut,
+      builder: (context, animValue, child) {
+        return Transform.scale(
+          scale: animValue,
+          child: child,
+        );
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: AppTheme.spaceSmall),
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-          maxLines: 2,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Colors.white70,
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
+            style: TextStyle(
+              fontSize: 11,
+              color: AppTheme.darkBrown.withOpacity(0.7),
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+  
+  // Custom page route with slide transition
+  Route _createRoute(Widget destination) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => destination,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
+        
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+        
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
     );
   }
   
@@ -255,87 +555,221 @@ class HomeScreen extends StatelessWidget {
     }
     
     final sortedDates = groupedShifts.keys.toList()..sort((a, b) {
-      // Very simple reverse sort for DD/MM/YYYY
       final partsA = a.split('/').map(int.parse).toList();
       final partsB = b.split('/').map(int.parse).toList();
-      final dateA = DateTime(partsA[2], partsB[1], partsA[0]);
+      final dateA = DateTime(partsA[2], partsA[1], partsA[0]);
       final dateB = DateTime(partsB[2], partsB[1], partsB[0]);
       return dateB.compareTo(dateA);
     });
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Shift History'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: serviceProvider.shiftHistory.isEmpty
-              ? const Center(child: Text('No shift history yet'))
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: sortedDates.length,
-                  itemBuilder: (context, dateIndex) {
-                    final date = sortedDates[dateIndex];
-                    final shifts = groupedShifts[date]!;
-                    final dailyTotal = shifts.fold(0.0, (sum, s) => sum + s.totalProfit);
-                    
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          decoration: BoxDecoration(
+            color: AppTheme.offWhite,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+            boxShadow: AppTheme.elevatedShadow,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(AppTheme.spaceLarge),
+                decoration: const BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(AppTheme.radiusLarge),
+                    topRight: Radius.circular(AppTheme.radiusLarge),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.offWhite.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                      ),
+                      child: const Icon(
+                        Icons.history,
+                        color: AppTheme.goldenOrange,
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spaceSmall),
+                    const Expanded(
+                      child: Text(
+                        'Shift History',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.offWhite,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: AppTheme.offWhite),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Content
+              Flexible(
+                child: serviceProvider.shiftHistory.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.all(AppTheme.spaceXLarge),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.inbox,
+                              size: 64,
+                              color: AppTheme.warmGray,
+                            ),
+                            SizedBox(height: AppTheme.spaceMedium),
+                            Text(
+                              'No shift history yet',
+                              style: AppTheme.bodyLarge,
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.all(AppTheme.spaceMedium),
+                        itemCount: sortedDates.length,
+                        itemBuilder: (context, dateIndex) {
+                          final date = sortedDates[dateIndex];
+                          final shifts = groupedShifts[date]!;
+                          final dailyTotal = shifts.fold(0.0, (sum, s) => sum + s.totalProfit);
+                          
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                date,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              // Date Header
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppTheme.spaceMedium,
+                                  vertical: AppTheme.spaceSmall,
+                                ),
+                                margin: const EdgeInsets.only(bottom: AppTheme.spaceSmall),
+                                decoration: BoxDecoration(
+                                  gradient: AppTheme.primaryGradient,
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      date,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: AppTheme.offWhite,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Daily: Dt${dailyTotal.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        color: AppTheme.goldenOrange,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              Text(
-                                'Daily: €${dailyTotal.toStringAsFixed(2)}',
-                                style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold),
-                              ),
+                              
+                              // Shifts for this date
+                              ...shifts.reversed.map((shift) => Card(
+                                margin: const EdgeInsets.only(bottom: AppTheme.spaceSmall),
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                                  side: BorderSide(
+                                    color: AppTheme.freshGreen.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: ListTile(
+                                  leading: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.freshGreen.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                    ),
+                                    child: const Icon(
+                                      Icons.check_circle,
+                                      color: AppTheme.freshGreen,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    'Dt${shift.totalProfit.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.freshGreen,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    '${_formatTime(shift.startTime)} - ${shift.endTime != null ? _formatTime(shift.endTime!) : "Active"}',
+                                    style: TextStyle(
+                                      color: AppTheme.darkBrown.withOpacity(0.7),
+                                    ),
+                                  ),
+                                ),
+                              )),
+                              
+                              const SizedBox(height: AppTheme.spaceMedium),
                             ],
+                          );
+                        },
+                      ),
+              ),
+              
+              // Actions
+              if (serviceProvider.shiftHistory.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.all(AppTheme.spaceMedium),
+                  decoration: BoxDecoration(
+                    color: AppTheme.warmGray.withOpacity(0.1),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(AppTheme.radiusLarge),
+                      bottomRight: Radius.circular(AppTheme.radiusLarge),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            serviceProvider.clearHistory();
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Clear History'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.bordeauxRed,
+                            side: const BorderSide(color: AppTheme.bordeauxRed),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                         ),
-                        ...shifts.reversed.map((shift) => Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            title: Text(
-                              '€${shift.totalProfit.toStringAsFixed(2)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Text(
-                              '${_formatTime(shift.startTime)} - ${shift.endTime != null ? _formatTime(shift.endTime!) : "Active"}',
-                            ),
-                          ),
-                        )),
-                        const Divider(),
-                      ],
-                    );
-                  },
+                      ),
+                    ],
+                  ),
                 ),
-        ),
-        actions: [
-          if (serviceProvider.shiftHistory.isNotEmpty)
-            TextButton(
-              onPressed: () {
-                serviceProvider.clearHistory();
-                Navigator.pop(context);
-              },
-              child: const Text('Clear History'),
-            ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            ],
           ),
-        ],
+        ),
       ),
     );
-  }
-  
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${_formatTime(dateTime)}';
   }
   
   String _formatTime(DateTime dateTime) {

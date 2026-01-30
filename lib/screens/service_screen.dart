@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/dish_provider.dart';
 import '../providers/service_provider.dart';
+import '../theme/app_theme.dart';
 import 'summary_screen.dart';
 
 class ServiceScreen extends StatelessWidget {
@@ -11,9 +12,10 @@ class ServiceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final dishProvider = Provider.of<DishProvider>(context);
     final serviceProvider = Provider.of<ServiceProvider>(context);
+    final screenHeight = MediaQuery.of(context).size.height;
     
     return PopScope(
-      canPop: false,
+     canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldPop = await _showExitConfirmation(context);
@@ -22,76 +24,134 @@ class ServiceScreen extends StatelessWidget {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Service in Progress'),
-          backgroundColor: Colors.green.shade700,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: () => _showServiceInfo(context, serviceProvider),
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            // Total Profit Bar
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.green.shade700,
-                    Colors.green.shade500,
+        backgroundColor: const Color(0xFFF5F5F5),
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // Custom AppBar
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: AppTheme.  successGradient,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x40000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
                   ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.green.shade700.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    'Current Profit',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w500,
+                child: Column(
+                  children: [
+                    // AppBar Content
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.spaceMedium,
+                        vertical: AppTheme.spaceSmall,
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back, color: AppTheme.offWhite),
+                            onPressed: () async {
+                              final shouldPop = await _showExitConfirmation(context);
+                              if (shouldPop && context.mounted) {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                          ),
+                          const Expanded(
+                            child: Text(
+                              'Service in Progress',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.offWhite,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.info_outline, color: AppTheme.offWhite),
+                            onPressed: () => _showServiceInfo(context, serviceProvider),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '€${serviceProvider.totalProfit.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 1.5,
+                    
+                    // Profit Display
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.spaceLarge,
+                        vertical: AppTheme.spaceLarge,
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.offWhite.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                ),
+                                child: const Icon(
+                                  Icons.attach_money,
+                                  color: AppTheme.goldenOrange,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spaceSmall),
+                              const Text(
+                                'Current Profit',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppTheme.offWhite,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppTheme.spaceSmall),
+                          Text(
+                            'Dt${serviceProvider.totalProfit.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.offWhite,
+                              letterSpacing: 1.5,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0x40000000),
+                                  offset: Offset(0, 2),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            
-            // Dishes Grid
-            Expanded(
-              child: Container(
-                color: Colors.grey.shade100,
+              
+              // Dishes Grid
+              Expanded(
                 child: dishProvider.dishes.isEmpty
                     ? _buildEmptyDishesState()
                     : GridView.builder(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(AppTheme.spaceMedium),
+                        physics: const BouncingScrollPhysics(),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 0.85,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.80,
+                          crossAxisSpacing: AppTheme.spaceMedium,
+                          mainAxisSpacing: AppTheme.spaceMedium,
                         ),
                         itemCount: dishProvider.dishes.length,
                         itemBuilder: (context, index) {
@@ -110,55 +170,57 @@ class ServiceScreen extends StatelessWidget {
                         },
                       ),
               ),
-            ),
-            
-            // End Service Button
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () => _endService(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade600,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 4,
+              
+              // End Service Button
+              Container(
+                padding: const EdgeInsets.all(AppTheme.spaceMedium),
+                decoration: BoxDecoration(
+                  color: AppTheme.offWhite,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.darkBrown.withOpacity(0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, -4),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.stop_circle, size: 28),
-                        SizedBox(width: 12),
-                        Text(
-                          'End Service',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () => _endService(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.bordeauxRed,
+                        foregroundColor: AppTheme.offWhite,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                         ),
-                      ],
+                        elevation: 4,
+                        shadowColor: AppTheme.bordeauxRed.withOpacity(0.5),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.stop_circle, size: 28),
+                          SizedBox(width: AppTheme.spaceSmall),
+                          Text(
+                            'End Service',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -166,32 +228,45 @@ class ServiceScreen extends StatelessWidget {
   
   Widget _buildEmptyDishesState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.restaurant_menu,
-            size: 80,
-            color: Colors.grey.shade400,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No dishes available',
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
+      child: Container(
+        margin: const EdgeInsets.all(AppTheme.spaceLarge),
+        padding: const EdgeInsets.all(AppTheme.spaceXLarge),
+        decoration: BoxDecoration(
+          color: AppTheme.offWhite,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spaceLarge),
+              decoration: BoxDecoration(
+                color: AppTheme.warmGray.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+              ),
+              child: Icon(
+                Icons.restaurant_menu,
+                size: 80,
+                color: AppTheme.warmGray,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Add dishes first in Dish Management',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
+            const SizedBox(height: AppTheme.spaceLarge),
+            const Text(
+              'No dishes available',
+              style: AppTheme.headlineMedium,
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+            const SizedBox(height: AppTheme.spaceSmall),
+            Text(
+              'Add dishes first in Dish Management',
+              style: AppTheme.bodyMedium.copyWith(
+                color: AppTheme.darkBrown.withOpacity(0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -206,30 +281,37 @@ class ServiceScreen extends StatelessWidget {
   ) {
     final isSelected = quantity > 0;
     
-    return Card(
-      elevation: isSelected ? 8 : 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isSelected ? Colors.green.shade400 : Colors.transparent,
-          width: 2,
-        ),
-      ),
+    return Material(
+      elevation: isSelected ? 6 : 2,
+      shadowColor: isSelected 
+          ? AppTheme.freshGreen.withOpacity(0.4)
+          : AppTheme.darkBrown.withOpacity(0.15),
+      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
       child: InkWell(
         onTap: onAdd,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         child: Container(
-          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isSelected
-                  ? [Colors.green.shade50, Colors.green.shade100]
-                  : [Colors.white, Colors.grey.shade50],
+            gradient: isSelected
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.successGreen.withOpacity(0.1),
+                      AppTheme.successGreen.withOpacity(0.05),
+                    ],
+                  )
+                : null,
+            color: isSelected ? null : AppTheme.offWhite,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+            border: Border.all(
+              color: isSelected 
+                  ? AppTheme.successGreen
+                  : AppTheme.warmGray.withOpacity(0.3),
+              width: isSelected ? 2 : 1,
             ),
           ),
+          padding: const EdgeInsets.all(AppTheme.spaceMedium),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -240,31 +322,49 @@ class ServiceScreen extends StatelessWidget {
                 child: quantity > 0
                     ? Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                          horizontal: 12,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green.shade600,
-                          borderRadius: BorderRadius.circular(12),
+                          gradient: AppTheme.successGradient,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.successGreen.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Text(
                           'x$quantity',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.offWhite,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
                         ),
                       )
-                    : const SizedBox.shrink(),
+                    : const SizedBox(height: 32),
               ),
               
               // Dish Icon
-              Icon(
-                Icons.restaurant,
-                size: 48,
-                color: isSelected ? Colors.green.shade700 : Colors.grey.shade400,
+              Container(
+                padding: const EdgeInsets.all(AppTheme.spaceMedium),
+                decoration: BoxDecoration(
+                  color: isSelected 
+                      ? AppTheme.successGreen.withOpacity(0.1)
+                      : AppTheme.warmGray.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                ),
+                child: Icon(
+                  Icons.restaurant,
+                  size: 40,
+                  color: isSelected ? AppTheme.successGreen : AppTheme.warmGray,
+                ),
               ),
+              
+              const SizedBox(height: AppTheme.spaceSmall),
               
               // Dish Name
               Text(
@@ -273,22 +373,26 @@ class ServiceScreen extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.green.shade900 : Colors.black87,
+                  color: isSelected ? AppTheme.successGreen : AppTheme.darkBrown,
                 ),
               ),
               
+              const SizedBox(height: 4),
+              
               // Price
               Text(
-                '€${price.toStringAsFixed(2)}',
+                'Dt${price.toStringAsFixed(2)}',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Colors.green.shade700,
+                  color: isSelected ? AppTheme.goldenOrange : AppTheme.bordeauxRed,
                 ),
               ),
+              
+              const SizedBox(height: AppTheme.spaceSmall),
               
               // Remove Button (only if quantity > 0)
               if (quantity > 0)
@@ -298,12 +402,17 @@ class ServiceScreen extends StatelessWidget {
                     onPressed: onRemove,
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.zero,
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
+                      foregroundColor: AppTheme.bordeauxRed,
+                      side: const BorderSide(color: AppTheme.bordeauxRed, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                      ),
                     ),
                     child: const Icon(Icons.remove, size: 20),
                   ),
-                ),
+                )
+              else
+                const SizedBox(height: 32),
             ],
           ),
         ),
@@ -320,32 +429,56 @@ class ServiceScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Service Information'),
+        backgroundColor: AppTheme.offWhite,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.successGreen.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              ),
+              child: const Icon(
+                Icons.info,
+                color: AppTheme.successGreen,
+              ),
+            ),
+            const SizedBox(width: AppTheme.spaceSmall),
+            const Text('Service Information', style: AppTheme.headlineMedium),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow('Start Time', _formatTime(startTime ?? DateTime.now())),
-            const SizedBox(height: 8),
-            _buildInfoRow('Duration', _formatDuration(duration)),
-            const SizedBox(height: 8),
+            _buildInfoRow('Start Time', _formatTime(startTime ?? DateTime.now()), Icons.access_time),
+            const SizedBox(height: AppTheme.spaceMedium),
+            _buildInfoRow('Duration', _formatDuration(duration), Icons.timer),
+            const SizedBox(height: AppTheme.spaceMedium),
             _buildInfoRow(
               'Items Sold',
               serviceProvider.currentOrders.fold(
                 0,
                 (sum, item) => sum + item.quantity,
               ).toString(),
+              Icons.shopping_cart,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.spaceMedium),
             _buildInfoRow(
               'Unique Dishes',
               serviceProvider.currentOrders.length.toString(),
+              Icons.restaurant_menu,
             ),
           ],
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.bordeauxRed,
+            ),
             child: const Text('Close'),
           ),
         ],
@@ -353,13 +486,35 @@ class ServiceScreen extends StatelessWidget {
     );
   }
   
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-      ],
+  Widget _buildInfoRow(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spaceMedium),
+      decoration: BoxDecoration(
+        color: AppTheme.warmGray.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(
+          color: AppTheme.warmGray.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.bordeauxRed, size: 20),
+          const SizedBox(width: AppTheme.spaceSmall),
+          Expanded(
+            child: Text(
+              label,
+              style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w500),
+            ),
+          ),
+          Text(
+            value,
+            style: AppTheme.bodyLarge.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.bordeauxRed,
+            ),
+          ),
+        ],
+      ),
     );
   }
   
@@ -377,9 +532,20 @@ class ServiceScreen extends StatelessWidget {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Exit Service?'),
+        backgroundColor: AppTheme.offWhite,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.exit_to_app, color: AppTheme.bordeauxRed),
+            SizedBox(width: AppTheme.spaceSmall),
+            Text('Exit Service?', style: AppTheme.headlineMedium),
+          ],
+        ),
         content: const Text(
           'Are you sure you want to exit? The service will continue running.',
+          style: AppTheme.bodyLarge,
         ),
         actions: [
           TextButton(
@@ -388,6 +554,9 @@ class ServiceScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.bordeauxRed,
+            ),
             child: const Text('Exit'),
           ),
         ],
@@ -400,9 +569,20 @@ class ServiceScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('End Service?'),
+        backgroundColor: AppTheme.offWhite,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.stop_circle, color: AppTheme.bordeauxRed),
+            SizedBox(width: AppTheme.spaceSmall),
+            Text('End Service?', style: AppTheme.headlineMedium),
+          ],
+        ),
         content: const Text(
           'Are you sure you want to end this service? This will finalize the shift and save the results.',
+          style: AppTheme.bodyLarge,
         ),
         actions: [
           TextButton(
@@ -411,8 +591,7 @@ class ServiceScreen extends StatelessWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.bordeauxRed,
             ),
             onPressed: () async {
               final serviceProvider = Provider.of<ServiceProvider>(
