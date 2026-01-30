@@ -27,11 +27,14 @@ class DishProvider extends ChangeNotifier {
   }
   
   // Add a new dish
-  Future<void> addDish(String name, double price) async {
+  Future<void> addDish(String name, double price, String type, {bool hasVariant = false, String? variant}) async {
     final dish = Dish(
       id: const Uuid().v4(),
       name: name,
       price: price,
+      type: type,
+      hasVariant: hasVariant,
+      variant: variant,
     );
     
     final created = await _repository.addDish(dish);
@@ -40,12 +43,15 @@ class DishProvider extends ChangeNotifier {
   }
   
   // Update an existing dish
-  Future<void> updateDish(String id, String name, double price) async {
+  Future<void> updateDish(String id, String name, double price, String type, {bool? hasVariant, String? variant}) async {
     final index = _dishes.indexWhere((dish) => dish.id == id);
     if (index != -1) {
       final updatedDish = _dishes[index].copyWith(
         name: name,
         price: price,
+        type: type,
+        hasVariant: hasVariant,
+        variant: variant,
       );
       
       await _repository.updateDish(updatedDish);
@@ -74,5 +80,33 @@ class DishProvider extends ChangeNotifier {
     } catch (e) {
       return null;
     }
+  }
+
+  // Search dishes by name (case-insensitive)
+  List<Dish> searchDishes(String query) {
+    if (query.isEmpty) return dishes;
+    final lowerQuery = query.toLowerCase();
+    return _dishes.where((dish) => 
+      dish.name.toLowerCase().contains(lowerQuery)
+    ).toList();
+  }
+
+  // Filter dishes by search query and category
+  List<Dish> filterDishes(String query, String category) {
+    if (query.isEmpty && category == 'All') return dishes;
+    
+    final lowerQuery = query.toLowerCase();
+    return _dishes.where((dish) {
+      final matchesSearch = query.isEmpty || dish.name.toLowerCase().contains(lowerQuery);
+      final matchesCategory = category == 'All' || dish.type == category;
+      return matchesSearch && matchesCategory;
+    }).toList();
+  }
+
+  // Get all unique categories
+  List<String> get categories {
+    final cats = _dishes.map((d) => d.type).toSet().toList();
+    cats.sort();
+    return ['All', ...cats];
   }
 }

@@ -274,7 +274,7 @@ class ApiService {
     // Convert orderItems from backend format to Flutter format
     final List<Map<String, dynamic>> orderItems = 
         (json['orderItems'] as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
+            .map((item) => Map<String, dynamic>.from(item as Map))
             .toList();
 
     return ServiceShift(

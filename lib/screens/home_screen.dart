@@ -83,13 +83,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   
                   const SizedBox(height: AppTheme.spaceXLarge * 1.5),
                   
-                  // Animated Action Buttons
+                  // PRIMARY ACTION: Start Service (Full Width, Dominant)
                   _buildAnimatedButton(
                     context: context,
                     index: 0,
                     icon: Icons.play_circle_filled,
                     label: 'Start Service',
                     gradient: AppTheme.successGradient,
+                    isPrimary: true,
                     onPressed: () {
                       serviceProvider.startService();
                       Navigator.push(
@@ -101,33 +102,48 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   
                   const SizedBox(height: AppTheme.spaceLarge),
                   
-                  _buildAnimatedButton(
-                    context: context,
-                    index: 1,
-                    icon: Icons.restaurant,
-                    label: 'Manage Dishes',
-                    gradient: AppTheme.accentGradient,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        _createRoute(const DishManagementScreen()),
-                      );
-                    },
-                  ),
-                  
-                  const SizedBox(height: AppTheme.spaceLarge),
-                  
-                  _buildAnimatedButton(
-                    context: context,
-                    index: 2,
-                    icon: Icons.history,
-                    label: 'Shift History',
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
-                    ),
-                    onPressed: () => _showShiftHistory(context),
+                  // SECONDARY ACTIONS: Side by Side Buttons
+                  Row(
+                    children: [
+                      // History Button
+                      Expanded(
+                        child: _buildAnimatedButton(
+                          context: context,
+                          index: 1,
+                          icon: Icons.history,
+                          label: 'History',
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
+                          ),
+                          isPrimary: false,
+                          isCompact: true,
+                          onPressed: () => _showShiftHistory(context),
+                        ),
+                      ),
+                      
+                      const SizedBox(width: AppTheme.spaceMedium),
+                      
+                      // Manage Dishes Button
+                      Expanded(
+                        child: _buildAnimatedButton(
+                          context: context,
+                          index: 2,
+                          icon: Icons.restaurant,
+                          label: 'Manage Dishes',
+                          gradient: AppTheme.accentGradient,
+                          isPrimary: false,
+                          isCompact: true,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              _createRoute(const DishManagementScreen()),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                   
                   const SizedBox(height: AppTheme.spaceXLarge),
@@ -270,6 +286,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     required String label,
     required LinearGradient gradient,
     required VoidCallback onPressed,
+    bool isPrimary = false,
+    bool isCompact = false,
   }) {
     return AnimatedBuilder(
       animation: _buttonsController,
@@ -291,6 +309,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         label: label,
         gradient: gradient,
         onPressed: onPressed,
+        isPrimary: isPrimary,
+        isCompact: isCompact,
       ),
     );
   }
@@ -301,16 +321,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     required String label,
     required LinearGradient gradient,
     required VoidCallback onPressed,
+    bool isPrimary = false,
+    bool isCompact = false,
   }) {
+    final double buttonHeight = isPrimary ? 72.0 : (isCompact ? 120.0 : 64.0);
+    final double iconSize = isPrimary ? 36.0 : (isCompact ? 28.0 : 32.0);
+    final double fontSize = isPrimary ? 22.0 : (isCompact ? 16.0 : 20.0);
+    final double elevationValue = isPrimary ? 10.0 : 6.0;
+    
     return Material(
-      elevation: 8,
+      elevation: elevationValue,
       shadowColor: AppTheme.darkBrown.withOpacity(0.4),
       borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
       child: InkWell(
-        onTap: () {
-          // Haptic feedback simulation with animation
-          onPressed();
-        },
+        onTap: onPressed,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         child: Ink(
           decoration: BoxDecoration(
@@ -318,53 +342,95 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           ),
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppTheme.spaceLarge,
-              vertical: 20,
+            height: buttonHeight,
+            padding: EdgeInsets.symmetric(
+              horizontal: isPrimary ? AppTheme.spaceLarge : AppTheme.spaceMedium,
+              vertical: isPrimary ? 20 : (isCompact ? AppTheme.spaceMedium : 16),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Hero(
-                  tag: 'button_${label}_icon',
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.offWhite.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+            child: isCompact
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.offWhite.withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Icon(icon, size: 32, color: AppTheme.offWhite),
-                  ),
-                ),
-                const SizedBox(width: AppTheme.spaceMedium),
-                Flexible(
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.offWhite,
-                      letterSpacing: 0.5,
-                      shadows: [
-                        Shadow(
-                          color: Color(0x40000000),
-                          offset: Offset(0, 2),
-                          blurRadius: 4,
+                        child: Icon(icon, size: iconSize, color: AppTheme.offWhite),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.offWhite,
+                          letterSpacing: 0.3,
+                          shadows: const [
+                            Shadow(
+                              color: Color(0x40000000),
+                              offset: Offset(0, 1),
+                              blurRadius: 3,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Hero(
+                        tag: 'button_${label}_icon',
+                        child: Container(
+                          padding: EdgeInsets.all(isPrimary ? 14 : 12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.offWhite.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(icon, size: iconSize, color: AppTheme.offWhite),
+                        ),
+                      ),
+                      const SizedBox(width: AppTheme.spaceMedium),
+                      Flexible(
+                        child: Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: fontSize,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.offWhite,
+                            letterSpacing: 0.5,
+                            shadows: const [
+                              Shadow(
+                                color: Color(0x40000000),
+                                offset: Offset(0, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ),
       ),

@@ -31,7 +31,7 @@ class ServiceShift {
           ? DateTime.parse(json['endTime'] as String) 
           : null,
       orderItems: (json['orderItems'] as List<dynamic>)
-          .map((e) => e as Map<String, dynamic>)
+          .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
       totalProfit: (json['totalProfit'] as num).toDouble(),
     );

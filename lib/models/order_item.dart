@@ -43,7 +43,7 @@ class OrderItem {
   // Create from JSON
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
-      dish: Dish.fromJson(json['dish'] as Map<String, dynamic>),
+      dish: Dish.fromJson(Map<String, dynamic>.from(json['dish'] as Map)),
       quantity: json['quantity'] as int,
     );
   }
